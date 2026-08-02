@@ -1,13 +1,14 @@
 """
 Voice Factory Module.
 
-Implements Factory Pattern to instantiate the configured VoiceProvider dynamically.
+Implements Factory Pattern to instantiate configured VoiceProvider instances dynamically.
 Decouples application code and PipelineCoordinator from specific provider implementations.
 """
 
 import logging
 from typing import Any, Dict, Type
 
+from voice.exceptions import InvalidVoiceConfiguration
 from voice.providers.base import BaseVoiceProvider
 from voice.providers.piper import PiperVoiceProvider
 
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class VoiceFactory:
     """
-    Factory class responsible for instantiating VoiceProvider implementations based on configuration.
+    Factory class responsible for instantiating BaseVoiceProvider implementations based on configuration.
     """
 
     _providers: Dict[str, Type[BaseVoiceProvider]] = {
@@ -26,11 +27,11 @@ class VoiceFactory:
     @classmethod
     def create(cls, config: Dict[str, Any]) -> BaseVoiceProvider:
         """
-        Creates and returns a VoiceProvider instance based on the configuration dictionary.
+        Creates and returns a BaseVoiceProvider instance based on the configuration dictionary.
 
         :param config: Configuration dictionary (reads voice.provider key).
         :return: Instance of BaseVoiceProvider.
-        :raises ValueError: If the requested voice provider is unsupported or missing.
+        :raises InvalidVoiceConfiguration: If the requested voice provider is unsupported or missing.
         """
         config = config or {}
         voice_cfg = config.get("voice", {}) if isinstance(config.get("voice"), dict) else {}
@@ -38,7 +39,7 @@ class VoiceFactory:
 
         if provider_name not in cls._providers:
             available = list(cls._providers.keys())
-            raise ValueError(
+            raise InvalidVoiceConfiguration(
                 f"Unsupported voice provider '{provider_name}'. Supported providers: {available}"
             )
 
@@ -49,9 +50,9 @@ class VoiceFactory:
     @classmethod
     def register_provider(cls, name: str, provider_cls: Type[BaseVoiceProvider]) -> None:
         """
-        Registers a new VoiceProvider implementation into the factory registry.
+        Registers a new BaseVoiceProvider implementation into the factory registry.
 
-        :param name: String key identifier for the provider (e.g., 'elevenlabs').
+        :param name: String key identifier for the provider (e.g., 'elevenlabs', 'azure').
         :param provider_cls: Concrete class inheriting from BaseVoiceProvider.
         """
         if not issubclass(provider_cls, BaseVoiceProvider):

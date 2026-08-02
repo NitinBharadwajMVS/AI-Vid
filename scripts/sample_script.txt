@@ -1,1 +1,15 @@
-This is a sample narration script for the AI Video Generation Pipeline.
+How Computers See Color
+
+When you look at an apple, you see red. A computer, however, only understands numbers.
+
+To bridge this gap, images are broken into tiny illuminated pixels.
+
+Each pixel contains Red, Green and Blue sub-pixels.
+
+Each channel stores values from 0 to 255.
+
+Pure red is represented as (255, 0, 0).
+
+Combining all RGB values allows a monitor to display over sixteen million colors.
+
+That is how computers transform mathematics into beautiful images.

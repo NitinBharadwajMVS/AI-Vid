@@ -1,47 +1,157 @@
-# ==========================
-# Pipeline Configuration
-# ==========================
+# ==============================================================================
+# AI Video Generation Pipeline - Configuration Specification
+# ==============================================================================
+# Production-ready configuration file for controlling script planning,
+# voice synthesis (Piper TTS), scene composition, video rendering, and logging.
+# All directory and file paths are relative to the project root.
+# ==============================================================================
 
+# ------------------------------------------------------------------------------
+# 1. Scene Planner Configuration
+# ------------------------------------------------------------------------------
 planner:
-  provider: "heuristic"      # heuristic | groq | ollama
+  # Planning engine provider (Options: "heuristic", "groq", "ollama")
+  provider: "heuristic"
+  # Path to the system prompt specification for scene planning
   prompt_file: "./planner/prompts/scene_planner_prompt.md"
 
+# ------------------------------------------------------------------------------
+# 2. Text-to-Speech (TTS) Voice Configuration
+# ------------------------------------------------------------------------------
 voice:
-  provider: "piper"          # piper
-  model: "en_US-lessac-medium"
+  # Voice synthesis provider implementation (Options: "piper", "elevenlabs", "azure")
+  provider: "piper"
+  # Path to the standalone Piper TTS executable CLI binary
+  executable: "./bin/piper/piper.exe"
+  # Path to the Piper ONNX voice model file
+  model: "./models/en_US-lessac-medium.onnx"
+  # Path to the Piper ONNX voice model JSON configuration file
+  config: "./models/en_US-lessac-medium.onnx.json"
+  # Audio export container format (Options: "wav", "mp3", "ogg")
+  output_format: "wav"
+  # Audio sample rate in Hertz (Hz)
+  sample_rate: 22050
+  # Speech speed multiplier rate (1.0 = normal speed)
   speed: 1.0
+  # Speech pitch modifier rate multiplier
+  pitch: 1.0
+  # Master gain volume multiplier (1.0 = nominal)
+  volume: 1.0
 
+# ------------------------------------------------------------------------------
+# 3. Video Renderer Configuration
+# ------------------------------------------------------------------------------
 renderer:
-  provider: "moviepy"        # moviepy
+  # Video compositing and rendering provider engine (Options: "moviepy", "ffmpeg")
+  provider: "moviepy"
+  # Export video resolution formatted as WidthxHeight
   resolution: "1920x1080"
+  # Target display aspect ratio
   aspect_ratio: "16:9"
+  # Frames per second (FPS) for output video stream
   fps: 30
+  # Video encoding codec (Options: "libx264", "libx265", "mpeg4")
+  codec: "libx264"
+  # Target video bitrate encoding rate
+  bitrate: "5000k"
+  # Default background backdrop color for scene rendering (HEX format)
+  background_color: "#000000"
 
+# ------------------------------------------------------------------------------
+# 4. Asset Management Configuration
+# ------------------------------------------------------------------------------
 assets:
-  provider: "local"          # local | stable_diffusion
+  # Visual asset provider engine (Options: "local", "stable_diffusion", "pexels")
+  provider: "local"
+  # Output file format for visual frames and generated assets (Options: "png", "jpg", "webp")
   image_format: "png"
+  # Enable persistent disk caching for visual assets
+  cache_assets: true
+  # Fallback background image path when no scene asset is specified
+  default_background: "./assets/default_bg.png"
 
+# ------------------------------------------------------------------------------
+# 5. Audio Alignment & Subtitle Configuration
+# ------------------------------------------------------------------------------
 alignment:
-  provider: "whisperx"       # whisperx
+  # Audio alignment engine provider (Options: "whisperx", "gentle", "forced")
+  provider: "whisperx"
+  # Target language ISO code for speech-to-text alignment
+  language: "en"
+  # Processing compute hardware device (Options: "cpu", "cuda")
+  device: "cpu"
+  # Model precision quantization format (Options: "int8", "float16", "float32")
+  compute_type: "int8"
 
+# ------------------------------------------------------------------------------
+# 6. Pipeline Cache Configuration
+# ------------------------------------------------------------------------------
 cache:
+  # Toggle pipeline caching for intermediate stages (audio, scenes, frames)
   enabled: true
+  # Directory path where cached artifacts are stored
   directory: "./cache"
+  # Cryptographic hash algorithm for cache key generation
+  hash_algorithm: "sha256"
 
+# ------------------------------------------------------------------------------
+# 7. Logging & Diagnostics Configuration
+# ------------------------------------------------------------------------------
 logging:
+  # Minimum logging level threshold (Options: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
   level: "INFO"
+  # Directory path where execution log files are stored
   directory: "./logs"
+  # Toggle saving stdout/stderr output stream directly to log files
+  save_console_output: true
 
+# ------------------------------------------------------------------------------
+# 8. Directory & Path Allocation Configuration
+# ------------------------------------------------------------------------------
 paths:
+  # Input text scripts storage directory
   scripts: "./scripts"
+  # Final rendered video output destination directory
   output: "./output"
+  # Temporary workspace directory for intermediate render artifacts
   temp: "./temp"
+  # Scene specification JSON schema export directory
   scene_specs: "./scene_specs"
+  # Base directory for static and generated visual assets
+  assets: "./assets"
+  # Base directory for local machine learning models and voice files
+  models: "./models"
+  # Directory for local third-party binary executables
+  bin: "./bin"
 
+# ------------------------------------------------------------------------------
+# 9. Styling & Typography Design Tokens
+# ------------------------------------------------------------------------------
 styling:
+  # Overall visual design theme (Options: "dark", "light")
   theme: "dark"
+  # Primary font family name for titles and headers
   primary_font: "Arial"
+  # Secondary font family name for captions and body text
   secondary_font: "Roboto"
+  # Font size in points for title headings
+  title_font_size: 48
+  # Font size in points for body and caption overlays
+  body_font_size: 24
+  # Primary text overlay foreground color (HEX format)
+  text_color: "#FFFFFF"
+  # Secondary accent highlight color (HEX format)
+  accent_color: "#FFD700"
 
+# ------------------------------------------------------------------------------
+# 10. System & Execution Environment Settings
+# ------------------------------------------------------------------------------
 system:
+  # Global random seed for reproducible random operations
   random_seed: 42
+  # Maximum worker thread count for parallel operations
+  workers: 4
+  # Force strict deterministic execution across pipeline stages
+  deterministic: true
+  # Automatically overwrite existing output files without prompting
+  overwrite_output: true

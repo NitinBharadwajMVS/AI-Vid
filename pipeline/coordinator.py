@@ -24,7 +24,9 @@ except ImportError:
 
 from planner.scene_planner import ScenePlanner
 from planner.scene_spec import SceneSpecification
+from renderer.video_renderer import VideoRenderer
 from utils.logger import setup_logger
+from voice.tts import TTSManager
 
 logger = setup_logger(__name__)
 
@@ -78,11 +80,25 @@ class PipelineCoordinator:
             logger.error("Scene Planner failed during execution: %s", e)
             raise RuntimeError(f"Pipeline execution aborted due to Scene Planner failure: {e}") from e
 
-        # Future pipeline stages (Placeholders)
-        scene_spec = self._generate_voice(scene_spec)
-        scene_spec = self._generate_assets(scene_spec)
-        scene_spec = self._align_audio(scene_spec)
-        self._render_video(scene_spec, output_path)
+        # 4. Stage 2: Voice Generation (TTS)
+        logger.info("Stage 2: Executing TTS Manager...")
+        tts_manager = TTSManager(config=self.config)
+        try:
+            scene_spec = tts_manager.generate_voice(scene_spec)
+            logger.info("TTS voice generation completed successfully.")
+        except Exception as e:
+            logger.error("TTS Manager failed during execution: %s", e)
+            raise RuntimeError(f"Pipeline execution aborted due to TTS Manager failure: {e}") from e
+
+        # 5. Stage 3: Video Rendering
+        logger.info("Stage 3: Executing Video Renderer...")
+        renderer = VideoRenderer(config=self.config)
+        try:
+            renderer.render(scene_spec, output_path)
+            logger.info("Video rendering completed successfully.")
+        except Exception as e:
+            logger.error("Video Renderer failed during execution: %s", e)
+            raise RuntimeError(f"Pipeline execution aborted due to Video Renderer failure: {e}") from e
 
         logger.info("Pipeline execution completed successfully.")
         return scene_spec
@@ -183,27 +199,3 @@ class PipelineCoordinator:
         except Exception as e:
             logger.error("Error reading script file '%s': %s", script_path, e)
             raise
-
-    # -------------------------------------------------------------------------
-    # Future Pipeline Stages (Placeholders)
-    # -------------------------------------------------------------------------
-
-    def _generate_voice(self, scene_spec: SceneSpecification) -> SceneSpecification:
-        """TODO: Generate TTS audio for each scene in future phase."""
-        logger.debug("Voice generation stage skipped (Placeholder).")
-        return scene_spec
-
-    def _generate_assets(self, scene_spec: SceneSpecification) -> SceneSpecification:
-        """TODO: Generate or download visual assets for each scene in future phase."""
-        logger.debug("Asset generation stage skipped (Placeholder).")
-        return scene_spec
-
-    def _align_audio(self, scene_spec: SceneSpecification) -> SceneSpecification:
-        """TODO: Align audio and generate word-level timings/captions in future phase."""
-        logger.debug("Audio alignment stage skipped (Placeholder).")
-        return scene_spec
-
-    def _render_video(self, scene_spec: SceneSpecification, output_path: str) -> None:
-        """TODO: Composite and render final MP4 video in future phase."""
-        logger.debug("Video rendering stage skipped (Placeholder).")
-        pass
