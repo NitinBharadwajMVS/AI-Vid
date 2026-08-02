@@ -15,8 +15,19 @@ env/
 .vscode/
 .idea/
 
+# Testing
+.pytest_cache/
+
+# Media and Output Files
+*.mp4
+*.wav
+*.png
+*.jpg
+*.jpeg
+
 # Logs
 *.log
+logs/
 
 # Temporary files
 temp/

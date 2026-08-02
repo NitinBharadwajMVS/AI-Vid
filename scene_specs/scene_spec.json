@@ -1,0 +1,43 @@
+{
+  "title": "Generated Video Scene Specification",
+  "version": "1.0",
+  "scenes": [
+    {
+      "scene_id": "scene_001",
+      "narration_text": "This is a sample narration script for the AI Video Generation Pipeline.",
+      "start_time": 0.0,
+      "end_time": 4.8,
+      "duration": 4.8,
+      "visual_description": "Visual representation showcasing: 'Scene 1: This is a sample...'. Key concept focus.",
+      "assets": [],
+      "visual_elements": [],
+      "captions": [],
+      "transition_in": {
+        "type": "cut",
+        "duration": 0.0,
+        "parameters": {}
+      },
+      "transition_out": null,
+      "animation_metadata": {
+        "hint": "zoom_in",
+        "scene_title": "Scene 1: This is a sample..."
+      },
+      "word_timings": [],
+      "voice_metadata": null,
+      "render_options": {
+        "on_screen_text": "THIS IS A SAMPLE"
+      }
+    }
+  ],
+  "global_render_settings": {
+    "resolution": "1920x1080",
+    "aspect_ratio": "16:9",
+    "fps": 30,
+    "theme": "dark",
+    "font": "Arial",
+    "background_color": "#000000",
+    "extra_options": {}
+  },
+  "total_duration": 4.8,
+  "metadata": {}
+}

@@ -4,6 +4,7 @@
 
 planner:
   provider: "heuristic"      # heuristic | groq | ollama
+  prompt_file: "./planner/prompts/scene_planner_prompt.md"
 
 voice:
   provider: "piper"          # piper

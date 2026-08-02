@@ -1,7 +1,9 @@
-class VoiceProvider:
-    """
-    Abstract placeholder for a voice provider.
-    """
-    def generate_audio(self, text: str, output_path: str):
-        """TODO"""
-        pass
+"""
+Voice Provider Module.
+
+Re-exports BaseVoiceProvider for convenient top-level access within the voice package.
+"""
+
+from voice.providers.base import BaseVoiceProvider
+
+__all__ = ["BaseVoiceProvider"]
