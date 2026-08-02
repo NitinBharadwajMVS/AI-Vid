@@ -1,0 +1,46 @@
+# ==========================
+# Pipeline Configuration
+# ==========================
+
+planner:
+  provider: "heuristic"      # heuristic | groq | ollama
+
+voice:
+  provider: "piper"          # piper
+  model: "en_US-lessac-medium"
+  speed: 1.0
+
+renderer:
+  provider: "moviepy"        # moviepy
+  resolution: "1920x1080"
+  aspect_ratio: "16:9"
+  fps: 30
+
+assets:
+  provider: "local"          # local | stable_diffusion
+  image_format: "png"
+
+alignment:
+  provider: "whisperx"       # whisperx
+
+cache:
+  enabled: true
+  directory: "./cache"
+
+logging:
+  level: "INFO"
+  directory: "./logs"
+
+paths:
+  scripts: "./scripts"
+  output: "./output"
+  temp: "./temp"
+  scene_specs: "./scene_specs"
+
+styling:
+  theme: "dark"
+  primary_font: "Arial"
+  secondary_font: "Roboto"
+
+system:
+  random_seed: 42

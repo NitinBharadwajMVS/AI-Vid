@@ -1,0 +1,1 @@
+This is a sample narration script for the AI Video Generation Pipeline.
