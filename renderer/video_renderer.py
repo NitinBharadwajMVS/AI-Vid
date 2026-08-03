@@ -72,6 +72,8 @@ class VideoRenderer:
 
             # 1. Build layout composition via SceneCompositor (which queries AssetManager)
             comp_data = self.compositor.build_scene_layout(scene, scene_spec.global_render_settings)
+            comp_data["total_scenes"] = len(scene_spec.scenes)
+            comp_data["scene_index"] = idx
 
             # 2. Render individual scene clip via provider using comp_data
             scene_clip_path = str(temp_dir / f"{scene_id}_clip.mp4")

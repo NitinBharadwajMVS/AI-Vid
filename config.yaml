@@ -24,9 +24,9 @@ voice:
   # Path to the standalone Piper TTS executable CLI binary
   executable: "./bin/piper/piper.exe"
   # Path to the Piper ONNX voice model file
-  model: "./models/en_US-lessac-medium.onnx"
+  model: "./model_files/en_US-lessac-medium.onnx"
   # Path to the Piper ONNX voice model JSON configuration file
-  config: "./models/en_US-lessac-medium.onnx.json"
+  config: "./model_files/en_US-lessac-medium.onnx.json"
   # Audio export container format (Options: "wav", "mp3", "ogg")
   output_format: "wav"
   # Audio sample rate in Hertz (Hz)
@@ -120,7 +120,7 @@ paths:
   # Base directory for static and generated visual assets
   assets: "./assets"
   # Base directory for local machine learning models and voice files
-  models: "./models"
+  models: "./model_files"
   # Directory for local third-party binary executables
   bin: "./bin"
 

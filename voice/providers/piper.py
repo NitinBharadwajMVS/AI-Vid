@@ -6,9 +6,6 @@ Provides standalone, offline speech synthesis capabilities.
 """
 
 import logging
-import subprocess
-import time
-import wave
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -28,8 +25,11 @@ class PiperVoiceProvider(BaseVoiceProvider):
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initializes PiperVoiceProvider with configuration parameters.
+        Validates paths for executable, model, and config files upon initialization.
 
         :param config: Configuration dictionary for voice settings.
+        :raises VoiceGenerationError: If executable, model, or config path is missing or invalid.
+        :raises InvalidVoiceConfiguration: If numeric voice parameters are invalid.
         """
         super().__init__(config)
         voice_cfg = self.config.get("voice", {}) if isinstance(self.config.get("voice"), dict) else {}
@@ -45,6 +45,58 @@ class PiperVoiceProvider(BaseVoiceProvider):
         except (ValueError, TypeError) as e:
             raise InvalidVoiceConfiguration(f"Invalid numeric voice configuration parameters: {e}") from e
 
+        # Validate configuration paths
+        self._validate_configuration()
+
+        # Log resolved absolute paths
+        executable_abs = Path(self.executable).resolve()
+        model_abs = Path(self.model).resolve()
+        config_abs = Path(self.model_config).resolve()
+
+        logger.info("PiperVoiceProvider initialized successfully.")
+        logger.info("Resolved Piper Executable Path: '%s'", executable_abs)
+        logger.info("Resolved Voice Model Path: '%s'", model_abs)
+        logger.info("Resolved Voice Config Path: '%s'", config_abs)
+
+    def _validate_configuration(self) -> None:
+        """
+        Validates that configured executable, model, and config paths exist on disk.
+
+        :raises VoiceGenerationError: If any path is missing or invalid.
+        """
+        if not self.executable:
+            reason = "Piper executable path is not configured in voice settings."
+            logger.error("Configuration validation failed: %s", reason)
+            raise VoiceGenerationError(reason)
+
+        executable_path = Path(self.executable)
+        if not executable_path.exists() or not executable_path.is_file():
+            reason = f"Piper executable path is invalid or file does not exist: '{self.executable}'"
+            logger.error("Configuration validation failed: %s", reason)
+            raise VoiceGenerationError(reason)
+
+        if not self.model:
+            reason = "Piper voice model path is not configured in voice settings."
+            logger.error("Configuration validation failed: %s", reason)
+            raise VoiceGenerationError(reason)
+
+        model_path = Path(self.model)
+        if not model_path.exists() or not model_path.is_file():
+            reason = f"Piper voice model path is invalid or file does not exist: '{self.model}'"
+            logger.error("Configuration validation failed: %s", reason)
+            raise VoiceGenerationError(reason)
+
+        if not self.model_config:
+            reason = "Piper voice config path is not configured in voice settings."
+            logger.error("Configuration validation failed: %s", reason)
+            raise VoiceGenerationError(reason)
+
+        config_path = Path(self.model_config)
+        if not config_path.exists() or not config_path.is_file():
+            reason = f"Piper voice config path is invalid or file does not exist: '{self.model_config}'"
+            logger.error("Configuration validation failed: %s", reason)
+            raise VoiceGenerationError(reason)
+
     def synthesize(
         self, text: str, output_path: str, options: Optional[Dict[str, Any]] = None
     ) -> VoiceMetadata:
@@ -55,10 +107,12 @@ class PiperVoiceProvider(BaseVoiceProvider):
         :param output_path: Destination file path for generated audio.
         :param options: Optional parameter overrides.
         :return: Strongly-typed VoiceMetadata object.
-        :raises VoiceGenerationError: If input text is invalid, executable/model missing,
-                                       subprocess fails, or WAV creation/parsing fails.
+        :raises VoiceGenerationError: If input text is invalid, subprocess fails, or output file is missing.
         """
-        # 1. Validate narration text
+        import subprocess
+        import time
+        import wave
+
         if not text or not text.strip():
             reason = "Cannot synthesize speech for empty or whitespace narration text."
             logger.error("Piper synthesis failure: %s", reason)
@@ -72,39 +126,12 @@ class PiperVoiceProvider(BaseVoiceProvider):
         pitch = float(opts.get("pitch", self.pitch))
         voice_id = str(opts.get("voice_id", self.voice_id))
 
-        # 2. Validate Piper executable and model files
-        if not executable_str:
-            reason = "Piper executable path is not configured."
-            logger.error("Piper synthesis failure: %s", reason)
-            raise VoiceGenerationError(reason)
-
         executable_path = Path(executable_str)
-        if not executable_path.exists() or not executable_path.is_file():
-            reason = f"Piper executable missing at path: '{executable_path}'"
-            logger.error("Piper synthesis failure: %s", reason)
-            raise VoiceGenerationError(reason)
-
-        if not model_str:
-            reason = "Piper model path is not configured."
-            logger.error("Piper synthesis failure: %s", reason)
-            raise VoiceGenerationError(reason)
-
         model_path = Path(model_str)
-        if not model_path.exists() or not model_path.is_file():
-            reason = f"Piper model file missing at path: '{model_path}'"
-            logger.error("Piper synthesis failure: %s", reason)
-            raise VoiceGenerationError(reason)
-
-        # 3. Create output directory
         out_path = Path(output_path)
-        try:
-            out_path.parent.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            reason = f"Cannot create output directory '{out_path.parent}': {e}"
-            logger.error("Piper synthesis failure: %s", reason)
-            raise VoiceGenerationError(reason) from e
 
-        # 4. Construct command
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
         cmd = [
             str(executable_path),
             "--model",
@@ -114,32 +141,34 @@ class PiperVoiceProvider(BaseVoiceProvider):
         ]
 
         if model_config_str:
-            model_config_path = Path(model_config_str)
-            if model_config_path.exists() and model_config_path.is_file():
-                cmd.extend(["--config", str(model_config_path)])
+            config_path = Path(model_config_str)
+            if config_path.exists():
+                cmd.extend(["--config", str(config_path)])
 
         if speed > 0 and speed != 1.0:
-            length_scale = round(1.0 / speed, 4)
-            cmd.extend(["--length_scale", str(length_scale)])
+            cmd.extend(["--length_scale", str(round(1.0 / speed, 4))])
 
-        # 5. Log synthesis attempt
         logger.info("Starting Piper synthesis...")
         logger.info("Model path: '%s'", str(model_path))
         logger.info("Output path: '%s'", str(out_path))
 
         start_time = time.time()
 
-        # 6. Execute Piper process via stdin
         try:
             subprocess.run(
                 cmd,
-                input=text.strip().encode("utf-8"),
+                input=text.strip(),
+                text=True,
                 capture_output=True,
                 check=True,
             )
         except subprocess.CalledProcessError as e:
-            stderr_msg = e.stderr.decode("utf-8", errors="replace") if e.stderr else str(e)
-            reason = f"Piper subprocess execution failed (exit code {e.returncode}): {stderr_msg.strip()}"
+            stderr_msg = e.stderr.strip() if e.stderr else str(e)
+            reason = f"Piper synthesis failed:\n{stderr_msg}"
+            logger.error("Piper synthesis failure: %s", reason)
+            raise VoiceGenerationError(reason) from e
+        except FileNotFoundError as e:
+            reason = f"Piper executable not found:\n{executable_path}"
             logger.error("Piper synthesis failure: %s", reason)
             raise VoiceGenerationError(reason) from e
         except Exception as e:
@@ -149,13 +178,11 @@ class PiperVoiceProvider(BaseVoiceProvider):
 
         execution_time = time.time() - start_time
 
-        # 7. Verify output WAV file exists
         if not out_path.exists() or not out_path.is_file():
-            reason = f"Output WAV file missing after synthesis at '{out_path}'"
+            reason = "Piper finished without producing an output file."
             logger.error("Piper synthesis failure: %s", reason)
             raise VoiceGenerationError(reason)
 
-        # 8. Calculate duration using Python's wave module
         duration = self._get_wav_duration(out_path)
 
         logger.info(
@@ -164,7 +191,6 @@ class PiperVoiceProvider(BaseVoiceProvider):
             duration,
         )
 
-        # 9. Return VoiceMetadata
         return VoiceMetadata(
             audio_file_path=str(out_path.resolve()),
             audio_duration=duration,
@@ -175,30 +201,18 @@ class PiperVoiceProvider(BaseVoiceProvider):
         )
 
     def _get_wav_duration(self, wav_path: Path) -> float:
-        """
-        Calculates exact audio duration in seconds from a WAV file using stdlib 'wave' module.
+        """Calculates exact audio duration in seconds from a WAV file using stdlib 'wave' module."""
+        import wave
 
-        :param wav_path: Path to the generated WAV audio file.
-        :return: Duration in seconds rounded to 4 decimal places.
-        :raises VoiceGenerationError: If the file is invalid WAV or cannot be read.
-        """
         try:
             with wave.open(str(wav_path), "rb") as wave_file:
                 frames = wave_file.getnframes()
                 rate = wave_file.getframerate()
                 if rate <= 0:
-                    reason = f"Invalid sample frame rate ({rate}) in WAV file '{wav_path}'"
-                    logger.error("Piper synthesis failure: %s", reason)
-                    raise VoiceGenerationError(reason)
-                return round(frames / float(rate), 4)
-        except wave.Error as e:
-            reason = f"Invalid WAV file at '{wav_path}': {e}"
-            logger.error("Piper synthesis failure: %s", reason)
-            raise VoiceGenerationError(reason) from e
-        except VoiceGenerationError:
-            raise
-        except Exception as e:
-            reason = f"Failed to read WAV file duration from '{wav_path}': {e}"
-            logger.error("Piper synthesis failure: %s", reason)
-            raise VoiceGenerationError(reason) from e
+                    return 0.0
+                return round(frames / float(rate), 2)
+        except Exception:
+            return 0.0
+
+
 
